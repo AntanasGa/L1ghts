@@ -1,0 +1,21 @@
+@layer theme
+  :root
+    @apply transition-all
+
+  :root.dark
+    @apply bg-stone-900 text-white
+  
+  #root
+    @apply min-h-screen
+  
+  input
+    &[type="text"],
+    &[type="password"],
+    &[type="number"],
+    &[type="date"],
+    &[type="email"],
+    textarea
+      @apply p-#{0.5} dark:bg-stone-900 outline-0 rounded #{!important}
+
+    &:focus-visible
+      @apply outline-none outline-0 border-0 #{!important}

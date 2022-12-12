@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: lightProjectP4ss
+    volumes:
+      - "./data:/var/lib/postgresql/data"
+    ports:
+      - 5432:5432
+# for testing SQL statements made by diesel
+#    command: ["postgres", "-c", "log_statement=all"]
