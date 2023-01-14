@@ -7,6 +7,7 @@ import React, { ChangeEvent, MouseEvent, useContext, useEffect, useMemo, useStat
 import { setDevices } from "store/devices";
 import { setPoints } from "store/points";
 import { ApiContext } from "utils/api";
+import { MAX_INTENSITY } from "utils/variables";
 
 export default function List() {
   const api = useContext(ApiContext);
@@ -202,15 +203,15 @@ export default function List() {
                 <td aria-label="Currently active">{ p.active ? "Yes" : "No" }</td>
                 <td aria-label="Light intensity">
                   <label
-                    htmlFor={ `0x${p.device_id}-${p.tag || p.device_item}-pr` }
-                  >{ p.val } / 1023</label>
+                    htmlFor={ `0x${ p.device_id }-${ p.tag || p.device_item }-pr` }
+                  >{ p.val } / { MAX_INTENSITY }</label>
                   <br />
                   <progress
                     className="w-8 sm:w-16 md:w-32"
-                    id={ `0x${p.device_id}-${p.tag || p.device_item}-pr` }
-                    max={ 1023 }
+                    id={ `0x${ p.device_id }-${ p.tag || p.device_item }-pr` }
+                    max={ MAX_INTENSITY }
                     value={ p.val }
-                    aria-label={ `0x${p.device_id} ${p.tag || p.device_item} power ${p.val} of 1023` }
+                    aria-label={ `0x${ p.device_id } ${ p.tag || p.device_item } power ${ p.val } of ${ MAX_INTENSITY }` }
                   />
                 </td>
                 <td aria-label="Actions">

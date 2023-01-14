@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { MAX_INTENSITY } from "utils/variables";
 
 export interface LightPointProps {
   width: number,
@@ -8,7 +9,7 @@ export interface LightPointProps {
 }
 
 const LightPoint = React.forwardRef<HTMLDivElement, LightPointProps>(({ height, width, rotation, intensity }, ref) => {
-  const adjustedIntensity = useMemo(() => (255 * (intensity || 0)) / 1023, [intensity]);
+  const adjustedIntensity = useMemo(() => (255 * (intensity || 0)) / MAX_INTENSITY, [intensity]);
   return (
     <div
       ref={ ref }

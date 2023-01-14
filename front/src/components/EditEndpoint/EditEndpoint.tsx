@@ -7,6 +7,7 @@ import { setPoints } from "store/points";
 import { setPresetsActive } from "store/presets";
 import { ApiContext } from "utils/api";
 import { Points } from "utils/api/types.api";
+import { MAX_INTENSITY } from "utils/variables";
 
 export interface EditEndpointProps {
   ids: number[],
@@ -92,7 +93,7 @@ export default function EditEndpoint({close, ids}: EditEndpointProps) {
     const errorHandles = {
       val: (isNaN(intensity) && "Not a number")
       || (intensity < 0 && "Can't be a negative number")
-      || (intensity > 1023 && "Can't exceed 1023") 
+      || (intensity > MAX_INTENSITY && `Can't exceed ${MAX_INTENSITY}`) 
       || "",
       width: (isNaN(width) && "Not a number")
       || (width < 0 && "can't be a negative number")
@@ -165,7 +166,7 @@ export default function EditEndpoint({close, ids}: EditEndpointProps) {
           type="range"
           name="intensity"
           min={0}
-          max={1023}
+          max={MAX_INTENSITY}
           value={ intensity }
           onInput={(e) => {
             setErrs((e) => ({...e, val: ""}));
