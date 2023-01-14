@@ -9,6 +9,7 @@ use crate::{
     models::{
         Points,
         PointsUpdate,
+        PointsRequest,
     },
     api::helpers::props::{
         LIGHT_LEVEL_MAX,
@@ -47,7 +48,7 @@ pub async fn get(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Points>>, ApiE
 }
 
 pub async fn put(
-    pts: web::Json<Vec<Points>>,
+    pts: web::Json<Vec<PointsRequest>>,
     pool: web::Data<DbPool>,
     shared_data: web::Data<SharedStorage>,
 ) -> Result<web::Json<Vec<Points>>, ApiError> {
@@ -83,7 +84,6 @@ pub async fn put(
         for item in pts.iter() {
             diesel::update(points)
             .filter(id.eq(item.id))
-            .filter(device_id.eq(item.device_id))
             .set(&PointsUpdate {
                 active: Some(item.active),
                 tag: Some(item.tag.clone()),

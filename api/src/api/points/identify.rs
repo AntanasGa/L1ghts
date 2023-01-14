@@ -6,7 +6,11 @@ use crate::{
         DbPool,
         SharedStorage,
     },
-    models::{QueryById, Points, Devices},
+    models::{
+        QueryById,
+        Points,
+        Devices,
+    },
     api::ApiError,
 };
 

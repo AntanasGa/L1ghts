@@ -65,7 +65,6 @@ export default function Devices() {
         <thead>
           <tr className="border-b-4">
             <th>Address</th>
-            <th>Pairs of</th>
             <th>End points</th>
           </tr>
         </thead>
@@ -75,13 +74,12 @@ export default function Devices() {
             devices.map((dev) => (
               <tr key={dev.id} className="border-b">
                 <td>0x{dev.adr.toString().padStart(2, "0")}</td>
-                <td>{dev.pairs_of}</td>
                 <td>{dev.endpoint_count}</td>
               </tr>
             ))
             :
             <tr>
-              <td colSpan={3}>No devices detected</td>
+              <td colSpan={2}>No devices detected</td>
             </tr>
           }
         </tbody>

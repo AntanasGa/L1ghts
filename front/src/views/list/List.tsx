@@ -23,14 +23,22 @@ export default function List() {
   const disPoints = useMemo(
     () => {
       const devList: {[key: string]: number} = {};
-      return devices && points && [...points].sort((a, b) => a.id - b.id)
+      return devices && points && [...points]
         .map((v) => {
           devList[v.device_id] = devList[v.device_id] ? devList[v.device_id] + 1 : 1;
           return {
             ...v,
             device_id: (devices.find((dv) => dv.id === v.device_id)?.adr || 0).toString().padStart(2, "0"),
-            device_item: devList[v.device_id],
+            i_device_id: v.device_id,
+            // device_position counts from 0
+            device_position: v.device_position + 1,
           };
+        })
+        .sort((a, b) => {
+          if (a.i_device_id === b.i_device_id) {
+            return a.device_position - b.device_position;
+          }
+          return a.i_device_id - b.i_device_id;
         });
     },
     [devices, points]
@@ -195,23 +203,23 @@ export default function List() {
           <tbody>
             { disPoints &&
             disPoints.map(p =>
-              <tr key={ p.id } aria-label={ `Device 0x${p.device_id}, endpoint ${p.device_item}` }>
+              <tr key={ p.id } aria-label={ `Device 0x${p.device_id}, endpoint ${p.device_position}` }>
                 <td aria-label="Select / deselect endpoint for editing"><input type="checkbox" checked={pointSelector[p.id] || false} onChange={(e) => updatePointSelector(e, p.id)}/></td>
                 <td aria-label="Device">0x{ p.device_id }</td>
-                <td aria-label="Endpoint">{ p.device_item }</td>
+                <td aria-label="Endpoint">{ p.device_position }</td>
                 <td aria-label="tag">{ p.tag || "-" }</td>
                 <td aria-label="Currently active">{ p.active ? "Yes" : "No" }</td>
                 <td aria-label="Light intensity">
                   <label
-                    htmlFor={ `0x${ p.device_id }-${ p.tag || p.device_item }-pr` }
+                    htmlFor={ `0x${ p.device_id }-${ p.tag || p.device_position }-pr` }
                   >{ p.val } / { MAX_INTENSITY }</label>
                   <br />
                   <progress
                     className="w-8 sm:w-16 md:w-32"
-                    id={ `0x${ p.device_id }-${ p.tag || p.device_item }-pr` }
+                    id={ `0x${ p.device_id }-${ p.tag || p.device_position }-pr` }
                     max={ MAX_INTENSITY }
                     value={ p.val }
-                    aria-label={ `0x${ p.device_id } ${ p.tag || p.device_item } power ${ p.val } of ${ MAX_INTENSITY }` }
+                    aria-label={ `0x${ p.device_id } ${ p.tag || p.device_position } power ${ p.val } of ${ MAX_INTENSITY }` }
                   />
                 </td>
                 <td aria-label="Actions">

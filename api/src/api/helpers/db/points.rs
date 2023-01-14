@@ -5,14 +5,21 @@ use diesel::{
     prelude::*,
 };
 use crate::api::ApiError;
-use crate::models::NewPoints;
+use crate::models::{
+    NewPoints,
+    Points,
+};
 use crate::schema::points::dsl::*;
 use crate::types::DbCon;
 
-pub fn fill_diff(con: &mut DbCon, diff: usize, devc_id: i32) -> Result<usize, ApiError> {
+pub fn fill_diff(con: &mut DbCon, diff: usize, devc_id: i32, fill_start: i32) -> Result<usize, ApiError> {
+    let mut fill_location = fill_start.clone();
     let insert_points: _ = (0..diff).into_iter()
-    .map(|_| NewPoints {
+    .map(|_| {
+        fill_location += 1;
+        NewPoints {
             device_id: devc_id.clone(),
+            device_position: fill_location,
             height: 1.0,
             width: 1.0,
             rotation: 0.0,
@@ -22,6 +29,7 @@ pub fn fill_diff(con: &mut DbCon, diff: usize, devc_id: i32) -> Result<usize, Ap
             val: 0,
             active: false,
             tag: None,
+        }
     })
     .collect::<Vec<NewPoints>>();
     insert_into(points).values(&insert_points).execute(con)
@@ -31,20 +39,26 @@ pub fn fill_diff(con: &mut DbCon, diff: usize, devc_id: i32) -> Result<usize, Ap
     })
 }
 
-pub fn reduce_diff(con: &mut DbCon, diff: usize, id_list: Vec<i32>) -> Result<(), ApiError> {
-    if id_list.len() == 0 {
+/// deleting items from the last `device_position`
+pub fn reduce_diff(con: &mut DbCon, diff: usize, point_list: Vec<Points>) -> Result<(), ApiError> {
+    if point_list.len() == 0 {
         return Ok(());
     }
-    if diff > id_list.len() {
+    if point_list.len() < diff {
         return Err(ApiError::InternalErr);
     }
+
+    let mut sorted_points = point_list.clone();
+    sorted_points.sort_by_key(|point| point.device_position);
+
     let mut delete_ = delete(points).into_boxed();
-    delete_ = delete_.filter(id.eq(id_list[id_list.len() - 1]));
+    delete_ = delete_.filter(id.eq(sorted_points[sorted_points.len() - 1].id));
     if diff > 1 {
         for i in 2..=diff {
-            delete_ = delete_.or_filter(id.eq(id_list[id_list.len() - i]));
+            delete_ = delete_.or_filter(id.eq(sorted_points[sorted_points.len() - i].id));
         }
     }
+
     delete_.execute(con)
     .map_err(|err| {
         log::error!("Failed inserting device points: {}", err);

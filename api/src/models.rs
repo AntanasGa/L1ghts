@@ -26,7 +26,6 @@ pub struct NewCredentials<'a> {
 pub struct Devices {
     pub id: i32,
     pub adr: i32,
-    pub pairs_of: i32,
     pub endpoint_count: i32,
 }
 
@@ -34,7 +33,6 @@ pub struct Devices {
 #[diesel(table_name = devices)]
 pub struct NewDevices {
     pub adr: i32,
-    pub pairs_of: i32,
     pub endpoint_count: i32,
 }
 
@@ -42,6 +40,21 @@ pub struct NewDevices {
 pub struct Points {
     pub id: i32,
     pub device_id: i32,
+    pub device_position: i32,
+    pub val: i32,
+    pub width: f32,
+    pub height: f32,
+    pub x: f32,
+    pub y: f32,
+    pub rotation: f32,
+    pub watts: f32,
+    pub active: bool,
+    pub tag: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct PointsRequest {
+    pub id: i32,
     pub val: i32,
     pub width: f32,
     pub height: f32,
@@ -71,6 +84,7 @@ pub struct PointsUpdate {
 #[diesel(table_name = points)]
 pub struct NewPoints {
     pub device_id: i32,
+    pub device_position: i32,
     pub val: i32,
     pub width: f32,
     pub height: f32,

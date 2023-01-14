@@ -7,6 +7,7 @@ use crate::types::DbPool;
 use crate::models::{
     Devices,
     NewDevices,
+    Points,
 };
 use actix_web::{
     web,
@@ -50,17 +51,14 @@ pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Ap
     let detected_devices: Vec<NewDevices> = vec![
         NewDevices{
             adr: 8,
-            pairs_of: 1,
             endpoint_count: 15,
         },
         NewDevices{
             adr: 9,
-            pairs_of: 1,
             endpoint_count: 15,
         },
         NewDevices{
             adr: 10,
-            pairs_of: 1,
             endpoint_count: 15,
         },
     ];
@@ -99,10 +97,6 @@ pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Ap
             Some(detected_index) => {
                 no_insert.push(detected_index);
                 let matched_device = &detected_devices[detected_index];
-                if matched_device.pairs_of != device.pairs_of {
-                    address_update.push((db_index, detected_index));
-                    continue;
-                }
                 if matched_device.endpoint_count != device.endpoint_count {
                     address_update.push((db_index, detected_index));
                     continue;
@@ -161,7 +155,6 @@ pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Ap
         .map(|sec| {
             let mut devc_clone = db_devs[sec.0].clone();
             devc_clone.endpoint_count = detected_devices[sec.0].endpoint_count.clone();
-            devc_clone.pairs_of = detected_devices[sec.0].pairs_of.clone();
             devc_clone
         })
         .collect::<Vec<Devices>>();
@@ -169,7 +162,6 @@ pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Ap
             diesel::update(devices).filter(crate::schema::devices::dsl::id.eq(devc_update.id))
             .set((
                 crate::schema::devices::dsl::endpoint_count.eq(devc_update.endpoint_count),
-                crate::schema::devices::dsl::pairs_of.eq(devc_update.pairs_of),
             ))
             .execute(&mut con)
             .map_err(|err| {
@@ -249,21 +241,28 @@ pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Ap
         })?;
         for devc in rebase_db_devs {
             use crate::schema::points::dsl::*;
-            let db_points = points.select(crate::schema::points::dsl::id)
-            .filter(device_id.eq(devc.id))
-            .load::<i32>(&mut con)
+            let db_points = points.filter(device_id.eq(devc.id))
+            .load::<Points>(&mut con)
             .map_err(|err| {
                 log::error!("Fetching devices failed: {}", err);
                 ApiError::InternalErr
             })?;
             let point_count = devc.endpoint_count as usize;
+
             if db_points.len() == point_count {
                 continue;
             }
+
             let diff = db_points.len().abs_diff(point_count);
             if db_points.len() < point_count {
-                fill_diff(&mut con, diff, devc.id)?;
+                let max_value = match db_points.iter().map(|point| point.device_position).max() {
+                    Some(v) => v,
+                    None => -1
+                };
+                fill_diff(&mut con, diff, devc.id, max_value)?;
+                continue;
             }
+
             if db_points.len() > point_count {
                 reduce_diff(&mut con, diff, db_points)?;
             }

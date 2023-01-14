@@ -1,12 +1,12 @@
 import { AxiosInstance, AxiosPromise, CancelToken } from "axios";
-import { Points, QueryById } from "../types.api";
+import { Points, QueryById, UpdatePoints } from "../types.api";
 
 function points(axios: AxiosInstance) {
   return {
     get: function(cancelToken?: CancelToken): AxiosPromise<Points[]> {
       return axios.get("/points", { cancelToken });
     },
-    update: function(points: Points[], cancelToken?: CancelToken): AxiosPromise<Points[]> {
+    update: function(points: UpdatePoints[], cancelToken?: CancelToken): AxiosPromise<Points[]> {
       return axios.put("/points", points, { cancelToken });
     },
     identify: function(id: number, cancelToken?: CancelToken): AxiosPromise<QueryById> {

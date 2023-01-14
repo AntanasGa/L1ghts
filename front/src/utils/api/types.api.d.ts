@@ -15,13 +15,10 @@ export interface AuthPost {
 export interface Devices {
     id: number,
     adr: number,
-    pairs_of: number,
     endpoint_count: number,
 }
-
-export interface Points {
+export interface UpdatePoints {
     id: number,
-    device_id: number,
     val: number,
     width: number,
     height: number,
@@ -31,6 +28,11 @@ export interface Points {
     watts: number,
     active: boolean,
     tag: string | null,
+}
+
+export interface Points extends UpdatePoints {
+    device_id: number,
+    device_position: number,
 }
 
 export interface QueryById {

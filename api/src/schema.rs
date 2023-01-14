@@ -25,7 +25,6 @@ diesel::table! {
     devices (id) {
         id -> Int4,
         adr -> Int4,
-        pairs_of -> Int4,
         endpoint_count -> Int4,
     }
 }
@@ -34,6 +33,7 @@ diesel::table! {
     points (id) {
         id -> Int4,
         device_id -> Int4,
+        device_position -> Int4,
         val -> Int4,
         width -> Float4,
         height -> Float4,

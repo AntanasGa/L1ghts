@@ -6,7 +6,7 @@ import React, { FormEvent, useContext, useEffect, useRef, useState } from "react
 import { setPoints } from "store/points";
 import { setPresetsActive } from "store/presets";
 import { ApiContext } from "utils/api";
-import { Points } from "utils/api/types.api";
+import { UpdatePoints } from "utils/api/types.api";
 import { MAX_INTENSITY } from "utils/variables";
 
 export interface EditEndpointProps {
@@ -118,7 +118,22 @@ export default function EditEndpoint({close, ids}: EditEndpointProps) {
       // handle number
       return false;
     }
-    const update: Points[] = [...ids].map((id) => ({ ...points?.[id], id, tag, active, val: intensity, width, height, rotation, watts }));
+    const updateWithUndefined: UpdatePoints[] = [...ids].map((id) => ({
+      id,
+      val: intensity,
+      width,
+      height,
+      x: points[id].x || 0,
+      y: points[id].y || 0,
+      rotation,
+      watts,
+      active,
+      tag, 
+    }));
+    const update = updateWithUndefined.filter(entry => typeof entry != "undefined");
+    if (updateWithUndefined.length !== update.length) {
+      return;
+    }
     setLoader(true);
     api.points.update(update)
       .then((res) => {
