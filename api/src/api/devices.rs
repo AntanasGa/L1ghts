@@ -1,9 +1,15 @@
+use std::sync::Arc;
+
 use crate::api::ApiError;
 use crate::api::helpers::db::points::{
     fill_diff,
     reduce_diff,
 };
-use crate::types::DbPool;
+use crate::api::helpers::i2c::LightDevices;
+use crate::types::{
+    DbPool,
+    SharedStorage,
+};
 use crate::models::{
     Devices,
     NewDevices,
@@ -46,23 +52,54 @@ pub async fn get(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Api
 }
 
 // updates from i2c and refreshes the 
-pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, ApiError> {
-    // TODO: Add routine for i2c checking of device config
-    let detected_devices: Vec<NewDevices> = vec![
-        NewDevices{
-            adr: 8,
-            endpoint_count: 15,
+pub async fn post(pool: web::Data<DbPool>, shared_data: web::Data<SharedStorage>) -> Result<web::Json<Vec<Devices>>, ApiError> {
+    // locking light update so we would not mess up the device
+    match shared_data.light_update_lock.try_read() {
+        Ok(v) => {
+            if *v == true {
+                drop(v);
+                return Err(ApiError::TooManyRequests);
+            }
+            drop(v);
+            Ok(())
         },
-        NewDevices{
-            adr: 9,
-            endpoint_count: 15,
+        Err(e) => {
+            log::error!("Could not read light_update_lock: {}", e);
+            Err(ApiError::InternalErr)
         },
-        NewDevices{
-            adr: 10,
-            endpoint_count: 15,
+    }?;
+
+    let mut modify_lock = match shared_data.light_update_lock.try_write() {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            log::error!("Could not fetch writable light_update_lock: {}", e);
+            Err(ApiError::InternalErr)
         },
-    ];
-    // end of temp block
+    }?;
+    *modify_lock = true;
+
+    let i2cid = Arc::try_unwrap(shared_data.i2c_device.clone())
+    .map_err(|err| {
+        log::error!("Failed fetching i2c identifier: {}", err);
+        *modify_lock = false;
+        ApiError::InternalErr
+    })?;
+    let mut controller = LightDevices::new(i2cid)
+    .map_err(|err| {
+        log::error!("Failed to get i2c driver: {}", err);
+        *modify_lock = false;
+        ApiError::InternalErr
+    })?;
+    
+    let detected_devices = controller.controllers()
+    .map_err(|err| {
+        log::error!("failed to fetch i2c controllers: {}", err);
+        *modify_lock = false;
+        ApiError::InternalErr
+    })?;
+    *modify_lock = false;
+    drop(modify_lock);
+
     use crate::schema::devices::dsl::*;
     let pool_read_devices = pool.clone();
     let db_devices = web::block(move || {
@@ -276,4 +313,3 @@ pub async fn post(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, Ap
     })??;
     Ok(web::Json(rebase_db_devices))
 }
-

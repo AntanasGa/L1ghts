@@ -46,7 +46,7 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let host = env::var("HOST").expect("HOST must be set");
     let port = env::var("PORT").expect("PORT must be set").parse::<u16>().expect("PORT must be a number (u16)");
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    
     let auth = env::var("JWT_AUTH").expect("JWT_AUTH must be set");
     let refresh = env::var("JWT_REFRESH").expect("JWT_REFRESH must be set");
     let tokens = Tokens {
@@ -54,15 +54,17 @@ async fn main() -> std::io::Result<()> {
         refresh,
     };
 
+    let i2c_device = env::var("I2C").expect("I2C must be set").parse::<u8>().expect("I2C must be a number (u8)");
+    
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let db_pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Could not initialized database pool");
-    
-    // cache block
 
     let cache_lock = SharedStorage {
-        light_update_lock: Arc::new(RwLock::new(false))
+        light_update_lock: Arc::new(RwLock::new(false)),
+        i2c_device: Arc::new(i2c_device),
     };
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));

@@ -24,6 +24,7 @@ pub struct Tokens {
 #[derive(Debug, Clone)]
 pub struct SharedStorage {
     pub light_update_lock: Arc<RwLock<bool>>,
+    pub i2c_device: Arc<u8>,
 }
 
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
