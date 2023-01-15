@@ -15,11 +15,11 @@ pub struct Credentials {
 
 #[derive(Insertable, Debug)]
 #[diesel(table_name = credentials)]
-pub struct NewCredentials<'a> {
-    pub user_name: &'a String,
-    pub pass: Option<&'a String>,
-    pub recovery_key: Option<&'a String>,
-    pub recovery_expires: Option<&'a NaiveDateTime>,
+pub struct NewCredentials {
+    pub user_name: String,
+    pub pass: Option<String>,
+    pub recovery_key: Option<String>,
+    pub recovery_expires: Option<NaiveDateTime>,
 }
 
 #[derive(Queryable, Debug, Serialize, Clone)]

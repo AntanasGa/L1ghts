@@ -1,7 +1,5 @@
 pub mod identify;
 
-use std::sync::Arc;
-
 use crate::{
     api::ApiError,
     types::{
@@ -89,12 +87,7 @@ pub async fn put(
         ApiError::InternalErr
     })?;
 
-    let i2cid = Arc::try_unwrap(shared_data.i2c_device.clone())
-    .map_err(|err| {
-        log::error!("Failed fetching i2c identifier: {}", err);
-        *modify_lock = false;
-        ApiError::InternalErr
-    })?;
+    let i2cid = *shared_data.i2c_device.clone();
     let mut controller = LightDevices::new(i2cid)
     .map_err(|err| {
         log::error!("Failed to get i2c driver: {}", err);

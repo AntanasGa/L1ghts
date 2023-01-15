@@ -78,6 +78,7 @@ export default function Login() {
             type="text"
             name="user_name"
             id="user_name"
+            autoComplete="username"
             disabled={loading}
             onInput={() => { setErrs((e) => ({ user_name: "", password: e.password })); }}
           />

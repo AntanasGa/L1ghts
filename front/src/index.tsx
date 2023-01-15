@@ -15,6 +15,7 @@ import store from "store";
 import Api from "components/Api";
 import AuthedSettings from "components/Layouts/AuthedSettings";
 import Devices from "views/settings/devices/Devices";
+import Setup from "views/setup/Setup";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -28,6 +29,7 @@ root.render(
         <Routes>
           <Route element={ <Api /> }>
             <Route path="/" element={ <Index /> } />
+            <Route path="/setup" element={ <Setup /> } />
             <Route path="/login" element={ <Login /> } />
             <Route element={ <Authed /> }>
               <Route path="/dashboard" element={ <Dashboard /> } />

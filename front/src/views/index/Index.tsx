@@ -16,7 +16,7 @@ export default function Index() {
       return;
     }
     const cancel = api.cancelable();
-    api.step(cancel.token)
+    api.step.get(cancel.token)
       .then(res => {
         setStage(Stage.complete);
         setColor("shadow-green-400");
@@ -25,8 +25,11 @@ export default function Index() {
           case "installed":
             navigate("/login");
             break;
-          default:
+          case "setup":
             navigate("/setup");
+            break;
+          default:
+            setColor("shadow-red-400");
             break;
           }
         }, 1000);

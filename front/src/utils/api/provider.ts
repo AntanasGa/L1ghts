@@ -1,10 +1,10 @@
 import ax from "axios";
-import { AxiosInstance, AxiosPromise, CancelToken, CancelTokenSource } from "axios";
+import { AxiosInstance, CancelTokenSource } from "axios";
 import auth from "./providers/auth";
 import devices from "./providers/devices";
 import points from "./providers/points";
 import presets from "./providers/presets";
-import { StepGet } from "./types.api";
+import step from "./providers/step";
 
 function methods(axios: AxiosInstance) {
   return {
@@ -12,9 +12,7 @@ function methods(axios: AxiosInstance) {
     devices: devices(axios),
     points: points(axios),
     presets: presets(axios),
-    step: function (cancelToken?: CancelToken): AxiosPromise<StepGet> {
-      return axios.get("/step", {cancelToken});
-    },
+    step: step(axios),
     cancelable: function(): CancelTokenSource {
       return ax.CancelToken.source();
     }

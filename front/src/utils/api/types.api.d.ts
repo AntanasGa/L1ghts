@@ -1,5 +1,5 @@
 export interface StepGet {
-    step: "installed" | "setup",
+    step: "installed" | "setup" | "setupb",
 }
 
 export interface AuthReqPost {

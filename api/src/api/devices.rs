@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::api::ApiError;
 use crate::api::helpers::db::points::{
     fill_diff,
@@ -78,12 +76,7 @@ pub async fn post(pool: web::Data<DbPool>, shared_data: web::Data<SharedStorage>
     }?;
     *modify_lock = true;
 
-    let i2cid = Arc::try_unwrap(shared_data.i2c_device.clone())
-    .map_err(|err| {
-        log::error!("Failed fetching i2c identifier: {}", err);
-        *modify_lock = false;
-        ApiError::InternalErr
-    })?;
+    let i2cid = *shared_data.i2c_device.clone();
     let mut controller = LightDevices::new(i2cid)
     .map_err(|err| {
         log::error!("Failed to get i2c driver: {}", err);

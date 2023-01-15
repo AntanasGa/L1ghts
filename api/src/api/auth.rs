@@ -10,15 +10,25 @@ use actix_web::{
     web,
     Responder,
     Result,
-    // http::header,
     HttpRequest,
     HttpResponse,
 };
 use bcrypt::{ verify, /* hash, DEFAULT_COST */ };
-use chrono::{ Utc, Duration };
+use chrono::{
+    Utc,
+    Duration,
+};
 use diesel::prelude::*;
-use diesel::{insert_into, delete, update};
-use jsonwebtoken::{ encode, /* decode, */ EncodingKey, Header };
+use diesel::{
+    insert_into,
+    delete,
+    update,
+};
+use jsonwebtoken::{
+    encode,
+    EncodingKey,
+    Header,
+};
 
 
 pub async fn post(
@@ -26,7 +36,7 @@ pub async fn post(
     tokens: web::Data<Tokens>,
     auth_req: web::Json<AuthReq>,
     rq: HttpRequest
-) -> Result<impl Responder, ApiError> {
+) -> Result<web::Json<AuthRes>, ApiError> {
     // wowie, thats a lot of work just for one header...
     let ua = rq.headers().get("user-agent")
     .ok_or(ApiError::InternalErr)
@@ -120,7 +130,8 @@ pub async fn post(
         use crate::schema::credential_refresh::dsl::*;
         insert_into(credential_refresh)
         .values(&new_refresh)
-        .execute(&mut con).map_err(|err| {
+        .execute(&mut con)
+        .map_err(|err| {
             log::error!("Could not insert new refresh token: {}", err);
             ApiError::InternalErr
         })
@@ -142,7 +153,7 @@ pub async fn refresh_post(
     tokens: web::Data<Tokens>,
     req: web::Json<Refresh>,
     rq: HttpRequest
-) -> Result<impl Responder, ApiError> {
+) -> Result<web::Json<Refresh>, ApiError> {
     let tok = req.token.to_string();
     use crate::schema::credential_refresh::dsl::*;
     let pool_refr = pool.clone();

@@ -6,6 +6,12 @@ pub struct StepGetRes {
 }
 
 #[derive(Deserialize)]
+pub struct SetupAuth {
+    pub user: AuthReq,
+    pub key: String,
+}
+
+#[derive(Deserialize, Clone)]
 pub struct AuthReq {
     pub user_name: String,
     pub password: String,

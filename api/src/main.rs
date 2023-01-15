@@ -6,6 +6,7 @@ pub mod api;
 pub mod middleware;
 pub mod types;
 use api::expose_api;
+use api::helpers::i2c::LightDevices;
 use dotenvy::dotenv;
 use types::{
     Tokens,
@@ -54,7 +55,16 @@ async fn main() -> std::io::Result<()> {
         refresh,
     };
 
+    let setup_secret = env::var("SETUP_SECRET").expect("SETUP_SECRET must be set");
+
     let i2c_device = env::var("I2C").expect("I2C must be set").parse::<u8>().expect("I2C must be a number (u8)");
+
+    match LightDevices::test(i2c_device).err() {
+        Some(err) => {
+            panic!("{}", err);
+        },
+        None => {}
+    }
     
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
@@ -65,6 +75,7 @@ async fn main() -> std::io::Result<()> {
     let cache_lock = SharedStorage {
         light_update_lock: Arc::new(RwLock::new(false)),
         i2c_device: Arc::new(i2c_device),
+        setup_secret: Arc::new(setup_secret),
     };
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));

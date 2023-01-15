@@ -3,16 +3,14 @@ mod auth;
 mod devices;
 mod points;
 mod presets;
+mod setup;
 
 use crate::{
-    calls::*,
     middleware::auth::TokenFactory,
 };
 use actix_web::{
     web,
     Scope,
-    Responder,
-    Result,
     HttpResponse,
     ResponseError,
     http::{
@@ -29,7 +27,14 @@ use serde_json;
 pub fn expose_api() -> Scope {
     web::scope("/api")
         .route("", web::get().to(|| async { "OK" }))
-        .route("/step", web::get().to(step_get))
+        .service(
+            web::scope("/step")
+            .service(
+                web::resource("")
+                .route(web::get().to(self::setup::get))
+                .route(web::post().to(self::setup::post))
+            )
+        )
         .service(
             web::scope("/auth")
             .service(
@@ -81,14 +86,6 @@ pub fn expose_api() -> Scope {
                 .route(web::put().to(self::presets::points::put))
             )
         )
-}
-
-async fn step_get() -> Result<impl Responder> {
-    // TODO: get actual response (checking wifi connection, database, etc.)
-    let res = StepGetRes {
-        step: "installed".to_string()
-    };
-    Ok(web::Json(res))
 }
 
 #[derive(Debug, Display)]
