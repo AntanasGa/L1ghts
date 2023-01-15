@@ -25,6 +25,11 @@ impl LightDevices {
         Ok(Self { driver })
     }
 
+    pub fn test(connection: u8) -> Result<(), LinuxI2CError> {
+        Driver::new(connection)?;
+        Ok(())
+    }
+
     pub fn convert_points(points: Vec<Points>, override_active: bool) -> Vec<(i32, Vec<i32>)> {
         let mut mapped: HashMap<i32, Vec<Points>> = HashMap::new();
         for point in points {

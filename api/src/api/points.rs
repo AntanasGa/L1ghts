@@ -23,7 +23,10 @@ use crate::{
 use actix_web::{
     web,
 };
-use diesel::{prelude::*, update};
+use diesel::{
+    prelude::*,
+    update,
+};
 
 use super::helpers::i2c::LightDevices;
 
