@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE credentials (
-  id SERIAL PRIMARY KEY,
+  id INTEGER NOT NULL PRIMARY KEY,
   user_name TEXT NOT NULL,
   pass TEXT,
   recovery_key TEXT,

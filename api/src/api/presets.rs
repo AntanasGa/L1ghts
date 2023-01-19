@@ -139,7 +139,7 @@ pub async fn post(
             ApiError::InternalErr
         })?;
 
-        let inserted_preset = insert_into(presets).values(NewPresets {
+        insert_into(presets).values(NewPresets {
             user_id: uid.clone(),
             preset_name: data.preset_name.clone(),
             favorite: data.favorite,
@@ -147,11 +147,21 @@ pub async fn post(
             icon: data.icon.clone(),
             active: true,
         })
-        .get_result::<Presets>(&mut con)
+        .execute(&mut con)
         .map_err(|err| {
             log::error!("Failed to insert new preset: {}", err);
             ApiError::InternalErr
         })?;
+
+        let inserted_preset_list = presets.order(crate::schema::presets::id.desc())
+        .limit(1)
+        .load::<Presets>(&mut con)
+        .map_err(|err| {
+            log::error!("Failed to fetch new preset: {}", err);
+            ApiError::InternalErr
+        })?;
+
+        let inserted_preset = inserted_preset_list[0].clone();
 
         let new_preset_items: _ = active_points.iter()
         .map(move |v| NewPresetItems {point_id: v.id, preset_id: inserted_preset.id, val: v.val })

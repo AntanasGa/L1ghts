@@ -2,8 +2,8 @@
 
 diesel::table! {
     credential_refresh (id) {
-        id -> Int4,
-        credential_id -> Int4,
+        id -> Integer,
+        credential_id -> Integer,
         token -> Text,
         user_agent -> Text,
         created_at -> Timestamp,
@@ -13,7 +13,7 @@ diesel::table! {
 
 diesel::table! {
     credentials (id) {
-        id -> Int4,
+        id -> Integer,
         user_name -> Text,
         pass -> Nullable<Text>,
         recovery_key -> Nullable<Text>,
@@ -23,24 +23,24 @@ diesel::table! {
 
 diesel::table! {
     devices (id) {
-        id -> Int4,
-        adr -> Int4,
-        endpoint_count -> Int4,
+        id -> Integer,
+        adr -> Integer,
+        endpoint_count -> Integer,
     }
 }
 
 diesel::table! {
     points (id) {
-        id -> Int4,
-        device_id -> Int4,
-        device_position -> Int4,
-        val -> Int4,
-        width -> Float4,
-        height -> Float4,
-        x -> Float4,
-        y -> Float4,
-        rotation -> Float4,
-        watts -> Float4,
+        id -> Integer,
+        device_id -> Integer,
+        device_position -> Integer,
+        val -> Integer,
+        width -> Float,
+        height -> Float,
+        x -> Float,
+        y -> Float,
+        rotation -> Float,
+        watts -> Float,
         active -> Bool,
         tag -> Nullable<Text>,
     }
@@ -48,17 +48,17 @@ diesel::table! {
 
 diesel::table! {
     preset_items (id) {
-        id -> Int4,
-        preset_id -> Int4,
-        point_id -> Int4,
-        val -> Int4,
+        id -> Integer,
+        preset_id -> Integer,
+        point_id -> Integer,
+        val -> Integer,
     }
 }
 
 diesel::table! {
     presets (id) {
-        id -> Int4,
-        user_id -> Int4,
+        id -> Integer,
+        user_id -> Integer,
         preset_name -> Text,
         favorite -> Bool,
         active -> Bool,

@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE credential_refresh (
-    id SERIAL PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY NOT NULL,
     credential_id INTEGER NOT NULL REFERENCES credentials(id),
     token TEXT NOT NULL,
     user_agent TEXT NOT NULL,

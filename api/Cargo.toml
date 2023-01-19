@@ -12,7 +12,7 @@ actix-web = "^4.2.1"
 bcrypt = "^0.13.0"
 chrono = "^0.4.22"
 derive_more = "^0.99.17"
-diesel = { version = "^2.0.2", features = ["postgres", "chrono", "r2d2"] }
+diesel = { version = "^2.0.2", features = ["chrono", "r2d2", "sqlite"] }
 dotenvy = "^0.15.6"
 env_logger = "^0.9.1"
 futures-util = "0.3.25"

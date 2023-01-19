@@ -67,7 +67,7 @@ async fn main() -> std::io::Result<()> {
     }
     
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let db_pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Could not initialized database pool");

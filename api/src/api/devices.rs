@@ -24,9 +24,6 @@ use diesel::{
 
 // fetch from database
 pub async fn get(pool: web::Data<DbPool>) -> Result<web::Json<Vec<Devices>>, ApiError> {
-    // use crate::middleware::auth::TokenData;
-    // let auth = req.extensions().get::<TokenData>().cloned();
-    // println!("{:?}", auth);
     let pool_device = pool.clone();
     let device_request = web::block(move || {
         use crate::schema::devices::dsl::*;

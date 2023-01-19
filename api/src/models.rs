@@ -96,7 +96,7 @@ pub struct NewPoints {
     pub tag: Option<String>,
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Debug, Clone)]
 pub struct Presets {
     pub id: i32,
     pub user_id: i32,

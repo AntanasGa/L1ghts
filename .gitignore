@@ -1,6 +1,7 @@
 /api/public/*
 /api/.env
 /api/target
+/api/*.sqlite
 
 /containers/data
 

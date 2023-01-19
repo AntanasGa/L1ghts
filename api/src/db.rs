@@ -1,12 +1,12 @@
 use diesel::prelude::*;
-use diesel::pg::PgConnection;
+use diesel::sqlite::SqliteConnection;
 use diesel::ConnectionError;
 use std::{ env::VarError, env };
 
 
-pub fn new() -> Result<PgConnection, DbError> {
+pub fn new() -> Result<SqliteConnection, DbError> {
     let database_url = env::var("DATABASE_URL")?;
-    let db = PgConnection::establish(&database_url)?;
+    let db = SqliteConnection::establish(&database_url)?;
     Ok(db)
 }
 

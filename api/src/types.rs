@@ -28,8 +28,8 @@ pub struct SharedStorage {
     pub setup_secret: Arc<String>,
 }
 
-pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 
 pub type JWTAuthToken = TokenData<AuthToken>;
 
-pub type DbCon = PooledConnection<ConnectionManager<PgConnection>>;
+pub type DbCon = PooledConnection<ConnectionManager<SqliteConnection>>;
