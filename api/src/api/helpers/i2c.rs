@@ -116,7 +116,10 @@ impl LightDevices {
     fn get_controller_identities(&mut self) -> Result<Vec<(u16, u8)>, LinuxI2CError> {
         let mut device_map: Vec<(u16, u8)> = vec![];
         for i in I2C_RANGE_MIN..I2C_RANGE_MAX {
-            let device_type = self.driver.read_byte(i, 0x00)?;
+            let device_type = match self.driver.read_byte(i, 0x00) {
+                Ok(v) => v,
+                Err(_) => continue
+            };
             if device_type != 0x10 {
                 continue;
             }
