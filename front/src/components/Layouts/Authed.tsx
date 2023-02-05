@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import Template from "../Icons/Template";
 import Presets from "../Icons/Presets";
@@ -13,97 +13,56 @@ import { AxiosError } from "axios";
 import Pencil from "components/Icons/Pencil";
 import EyeDropper from "components/Icons/EyeDropper";
 import { setPoints } from "store/points";
+import { setJustLoggedIn } from "store/auth";
 
 export default function Authed() {
   const navigate = useNavigate();
   const api = useContext(ApiContext);
   const dispatch = useAppDispatch();
 
-  const mounted = useRef(false);
+  const didMount = useRef(false);
   const presetBox = useRef<null|HTMLLIElement>(null);
   const ignoreClick = useRef(false);
 
   const authed = useAppSelector(store => store.auth.authed);
   const presets = useAppSelector(store => store.presets.presets);
   const activePreset = useAppSelector(store => store.presets.active);
-  
+  const justLoggedIn = useAppSelector(store => store.auth.justLoggedIn);
+
   const [presetActive, setPresetActive] = useState(false);
   const [presetDropdownActive, setPresetDropdownActive] = useState(false);
   const [presetId, setPresetId] = useState<undefined|number>(undefined);
 
-  useEffect(() => {
-    if (!authed && authed !== undefined) {
-      navigate("/");
+  const navbarClasses = useMemo(() => {
+    const result = ["card p-0 rounded mb-3 mx-auto flex ease-in duration-150"];
+    if (justLoggedIn !== false) {
+      result.push("mb-[-10rem]");
     }
-  }, [authed, navigate]);
+    return result;
+  }, [justLoggedIn]);
 
-  useEffect(() => {
-    if (!api) {
+  const exitPresets = useCallback((e: MouseEvent | KeyboardEvent) => {
+    if (!presetDropdownActive || !presetBox.current) {
       return;
     }
-    const token = api.cancelable();
-    const activeToken = api.cancelable();
-    api.presets.get(token.token)
-      .then((e) => {
-        dispatch(setPresets(e.data));
-      })
-      .catch((e: AxiosError) => {
-        if (e.name === "CanceledError") {
-          return;
-        }
-        console.error(e);
-      });
-    api.presets.active.get(activeToken.token)
-      .then((r) => {
-        dispatch(setPresetsActive(r.data.id));
-      })
-      .catch((e: AxiosError) => {
-        if (e.name === "CanceledError") {
-          return;
-        }
-        console.error(e);
-      });
-    return () => {
-      token.cancel();
-      activeToken.cancel();
-    };
-  }, [api, dispatch]);
-
-  useEffect(() => {
-    function exitPresets(e: MouseEvent | KeyboardEvent) {
-      if (!presetDropdownActive || !presetBox.current) {
-        return;
-      }
-      // this somehow happens the same call cycle as the element being created so this is a workaround
-      if (ignoreClick.current) {
-        ignoreClick.current = false;
-        return;
-      }
-      if (e instanceof KeyboardEvent && e.key !== "esc") {
-        return;
-      }
-      if (e instanceof MouseEvent) {
-        const rect = presetBox.current.getBoundingClientRect();
-        const clickInBox = rect.top <= e.clientY && rect.bottom >= e.clientY
-          && rect.left <= e.clientX && rect.right >= e.clientX;
-        if (clickInBox) {
-          return;
-        }
-      }
-      setPresetDropdownActive(false);
+    // this somehow happens the same call cycle as the element being created so this is a workaround
+    if (ignoreClick.current) {
+      ignoreClick.current = false;
+      return;
     }
-    if (!mounted.current) {
-      mounted.current = true;
-      window.addEventListener("click", exitPresets);
-      window.addEventListener("keypress", exitPresets);
+    if (e instanceof KeyboardEvent && e.key !== "esc") {
+      return;
     }
-    return () => {
-      mounted.current = false;
-      window.removeEventListener("click", exitPresets);
-      window.removeEventListener("keypress", exitPresets);
-    };
+    if (e instanceof MouseEvent) {
+      const rect = presetBox.current.getBoundingClientRect();
+      const clickInBox = rect.top <= e.clientY && rect.bottom >= e.clientY
+        && rect.left <= e.clientX && rect.right >= e.clientX;
+      if (clickInBox) {
+        return;
+      }
+    }
+    setPresetDropdownActive(false);
   }, [presetDropdownActive]);
-
 
   function setPresetToActive(id: number) {
     api?.presets.active.update(id)
@@ -149,6 +108,66 @@ export default function Authed() {
     setPresetId(undefined);
   }
 
+  function loadPresets() {
+    if (!api) {
+      return;
+    }
+    const token = api.cancelable();
+    const activeToken = api.cancelable();
+    api.presets.get(token.token)
+      .then((e) => {
+        dispatch(setPresets(e.data));
+      })
+      .catch((e: AxiosError) => {
+        if (e.name === "CanceledError") {
+          return;
+        }
+        console.error(e);
+      });
+    api.presets.active.get(activeToken.token)
+      .then((r) => {
+        dispatch(setPresetsActive(r.data.id));
+      })
+      .catch((e: AxiosError) => {
+        if (e.name === "CanceledError") {
+          return;
+        }
+        console.error(e);
+      });
+    return () => {
+      token.cancel();
+      activeToken.cancel();
+    };
+  }
+
+  useEffect(() => {
+    if (!authed && authed !== undefined) {
+      navigate("/");
+    }
+  }, [authed, navigate]);
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+    let cancelGroup: (() => void) | undefined;
+    if (!didMount.current) {
+      didMount.current = true;
+      window.addEventListener("click", exitPresets);
+      window.addEventListener("keypress", exitPresets);
+      dispatch(setJustLoggedIn(false));
+
+      cancelGroup = loadPresets();
+    }
+    return () => {
+      didMount.current = false;
+      window.removeEventListener("click", exitPresets);
+      window.removeEventListener("keypress", exitPresets);
+      cancelGroup?.();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, dispatch]);
+
   return (
     <>
       <Outlet />
@@ -160,8 +179,8 @@ export default function Authed() {
       >
         <EditPreset id={ presetId } onClose={() => onPresetModalClose() } />
       </Modal>
-      <nav className="fixed bottom-0 left-0 right-0 flex" aria-label="Logged in navigation">
-        <div className="card p-0 rounded m-3 mx-auto flex">
+      <nav className="fixed bottom-0 left-0 right-0 flex overflow-hidden" onTransitionEnd={ (ev) => ev.currentTarget.classList.remove("overflow-hidden") } aria-label="Logged in navigation">
+        <div className={ navbarClasses.join(" ") }>
           <Link to="/dashboard" className="p-2" aria-label="Dashboard">
             <Template classNameArr={["w-16", "h-16"]} />
           </Link>

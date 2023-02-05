@@ -15,6 +15,9 @@ use super::props::{
     LIGHT_LEVEL_MAX,
 };
 
+/// Light device interface
+/// 
+/// Testing device: `255`
 pub struct LightDevices {
     driver: Driver,
 }
@@ -142,11 +145,14 @@ impl LightDevices {
 }
 
 struct Driver {
-    con: LinuxI2CBus,
+    con: Option<LinuxI2CBus>,
 }
 
 impl Driver {
     pub fn new(connection: u8) -> Result<Self, LinuxI2CError> {
+        if connection == 255 {
+            return Ok(Self { con: None });
+        }
         let con = match LinuxI2CBus::new(format!("/dev/i2c-{}", connection)) {
             Ok(v) => Ok(v),
             Err(_) => {
@@ -156,24 +162,64 @@ impl Driver {
                 }
             }
         }?;
-        Ok(Self { con })
+        Ok(Self { con: Some(con) })
     }
 
     pub fn read_byte(&mut self, address: u16, value: u8) -> Result<u8, LinuxI2CError> {
+        match self.con {
+            Some(_) => {
+                let res = self.read_device_byte(address, value)?;
+                Ok(res)
+            },
+            None => {
+                match address {
+                    0x0008 | 0x0009 => {
+                        let res = match value {
+                            0 => 0x10,
+                            1 => 0x0f,
+                            _ => 0x00,
+                        };
+                        Ok(res)
+                    },
+                    _ => {
+                        Err(LinuxI2CError::Io(io::Error::from(ErrorKind::AddrNotAvailable)))
+                    },
+                }
+            },
+        }
+    }
+
+    fn read_device_byte(&mut self, address: u16, value: u8) -> Result<u8, LinuxI2CError> {
+        if self.con.is_none() {
+            return Err(LinuxI2CError::Io(io::Error::from(ErrorKind::AddrNotAvailable)));
+        }
         let mut read_data = [0];
         let mut msgs = [
             LinuxI2CMessage::write(&[value]).with_address(address),
             LinuxI2CMessage::read(&mut read_data).with_address(address),
         ];
-        self.con.transfer(&mut msgs)?;
+        self.con.as_mut().unwrap().transfer(&mut msgs)?;
         Ok(read_data[0])
     }
 
     pub fn write_bytes(&mut self, address: u16, values: Vec<u8>) -> Result<(), LinuxI2CError> {
+        match self.con {
+            Some(_) => {
+                self.write_device_bytes(address, values)?;
+            },
+            None => {},
+        }
+        Ok(())
+    }
+
+    fn write_device_bytes(&mut self, address: u16, values: Vec<u8>) -> Result<(), LinuxI2CError> {
+        if self.con.is_none() {
+            return Err(LinuxI2CError::Io(io::Error::from(ErrorKind::AddrNotAvailable)));
+        }
         let mut msgs = [
             LinuxI2CMessage::write(&values).with_address(address),
         ];
-        self.con.transfer(&mut msgs)?;
+        self.con.as_mut().unwrap().transfer(&mut msgs)?;
         Ok(())
     }
 }

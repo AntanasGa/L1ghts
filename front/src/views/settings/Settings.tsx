@@ -1,13 +1,14 @@
 import { AxiosError } from "axios";
 import { useAppDispatch } from "hooks";
 import React, { useContext, MouseEvent } from "react";
-import { setAuthed } from "store/auth";
+import { setAuthed, setJustLoggedIn } from "store/auth";
 import { ApiContext } from "utils/api";
 import { resetLogin } from "utils/cookies";
 
 export default function Settings() {
   const api = useContext(ApiContext);
   const dispatch = useAppDispatch();
+
   function logout(_: MouseEvent<HTMLButtonElement>) {
     api?.auth.logout()
       .catch((e: AxiosError) => {
@@ -15,7 +16,10 @@ export default function Settings() {
       })
       .finally(() => {
         resetLogin();
-        dispatch(setAuthed(false));
+        dispatch(setJustLoggedIn(undefined));
+        setTimeout(() => {
+          dispatch(setAuthed(false));
+        }, 250);
       });
   }
   return (
