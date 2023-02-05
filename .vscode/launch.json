@@ -10,9 +10,8 @@
             "name": "rust",
             "program": "${workspaceFolder}/api/target/debug/api",
             "args": [],
-            "cwd": "${workspaceFolder}/api/target/debug/",
+            "cwd": "${workspaceFolder}/api/",
             "sourceLanguages": ["rust"],
-            
         }
     ]
 }
