@@ -18,7 +18,6 @@ export const authSlice = createSlice({
       state.authed = action.payload;
     },
     setJustLoggedIn: (state, action: PayloadAction<boolean | undefined>) => {
-      console.log("what", action);
       state.justLoggedIn = action.payload;
     },
   },

@@ -41,10 +41,7 @@ export default function Settings() {
       user_name: data.get("new_user_name"),
       password: data.get("new_password"),
     };
-    console.log({formFields});
     if (!formFields.setup_key || !formFields.user_name || !formFields.password) {
-      console.log("somethings empty");
-      console.log(JSON.parse(JSON.stringify(formFields)));
       setErrs({
         setup_key: formFields.setup_key ? "" : "Setup key empty",
         user_name: formFields.user_name ? "" : "Username empty",
