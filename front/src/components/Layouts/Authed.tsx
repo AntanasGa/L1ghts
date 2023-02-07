@@ -1,10 +1,11 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as MouseEv} from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import Template from "../Icons/Template";
 import Presets from "../Icons/Presets";
 import Settings from "../Icons/Settings";
 import List from "../Icons/List";
-import { useAppDispatch, useAppSelector } from "hooks";
+import { useAppDispatch, useAppSelector, useRefedState } from "hooks";
 import { ApiContext } from "utils/api";
 import Modal from "components/Modal/Modal";
 import EditPreset from "components/EditPreset/EditPreset";
@@ -20,20 +21,21 @@ export default function Authed() {
   const api = useContext(ApiContext);
   const dispatch = useAppDispatch();
 
-  const didMount = useRef(false);
-  const presetBox = useRef<null|HTMLLIElement>(null);
-  const ignoreClick = useRef(false);
-
   const authed = useAppSelector(store => store.auth.authed);
   const presets = useAppSelector(store => store.presets.presets);
   const activePreset = useAppSelector(store => store.presets.active);
   const justLoggedIn = useAppSelector(store => store.auth.justLoggedIn);
 
   const [presetActive, setPresetActive] = useState(false);
-  const [presetDropdownActive, setPresetDropdownActive] = useState(false);
+  const [presetDropdownActiveRef, presetDropdownActive, setPresetDropdownActive] = useRefedState(false);
   const [presetId, setPresetId] = useState<undefined|number>(undefined);
+  const [navOverflow, setNavOverflow] = useState(justLoggedIn);
 
-  const navbarClasses = useMemo(() => {
+  const didMount = useRef(false);
+  const presetBox = useRef<null|HTMLUListElement>(null);
+  const ignoreClick = useRef(false);
+
+  const menuClasses = useMemo(() => {
     const result = ["card p-0 rounded mb-3 mx-auto flex ease-in duration-150"];
     if (justLoggedIn !== false) {
       result.push("mb-[-10rem]");
@@ -41,28 +43,51 @@ export default function Authed() {
     return result;
   }, [justLoggedIn]);
 
-  const exitPresets = useCallback((e: MouseEvent | KeyboardEvent) => {
-    if (!presetDropdownActive || !presetBox.current) {
+  const navClasses = useMemo(() => {
+    const result = ["fixed bottom-0 left-0 right-0 flex"];
+    if (navOverflow !== false) {
+      result.push("overflow-hidden");
+    }
+    return result;
+  }, [navOverflow]);
+
+  function callEditPreset(id: number) {
+    setPresetId(id);
+    setPresetActive(true);
+  }
+
+  function onPresetModalClose() {
+    setPresetActive(false);
+    setPresetId(undefined);
+  }
+
+  useEffect(() => {
+    if (!authed && authed !== undefined) {
+      navigate("/");
+    }
+  }, [authed, navigate]);
+
+  useEffect(() => {
+    if (!api) {
       return;
     }
-    // this somehow happens the same call cycle as the element being created so this is a workaround
-    if (ignoreClick.current) {
-      ignoreClick.current = false;
-      return;
+    let cancelGroup: (() => void) | undefined;
+    if (!didMount.current) {
+      didMount.current = true;
+      window.addEventListener("click", exitPresets);
+      window.addEventListener("keypress", exitPresets);
+      dispatch(setJustLoggedIn(false));
+
+      cancelGroup = loadPresets();
     }
-    if (e instanceof KeyboardEvent && e.key !== "esc") {
-      return;
-    }
-    if (e instanceof MouseEvent) {
-      const rect = presetBox.current.getBoundingClientRect();
-      const clickInBox = rect.top <= e.clientY && rect.bottom >= e.clientY
-        && rect.left <= e.clientX && rect.right >= e.clientX;
-      if (clickInBox) {
-        return;
-      }
-    }
-    setPresetDropdownActive(false);
-  }, [presetDropdownActive]);
+    return () => {
+      didMount.current = false;
+      window.removeEventListener("click", exitPresets);
+      window.removeEventListener("keypress", exitPresets);
+      cancelGroup?.();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api, dispatch]);
 
   function setPresetToActive(id: number) {
     api?.presets.active.update(id)
@@ -98,16 +123,6 @@ export default function Authed() {
       .catch();
   }
 
-  function callEditPreset(id: number) {
-    setPresetId(id);
-    setPresetActive(true);
-  }
-
-  function onPresetModalClose() {
-    setPresetActive(false);
-    setPresetId(undefined);
-  }
-
   function loadPresets() {
     if (!api) {
       return;
@@ -140,33 +155,34 @@ export default function Authed() {
     };
   }
 
-  useEffect(() => {
-    if (!authed && authed !== undefined) {
-      navigate("/");
-    }
-  }, [authed, navigate]);
-
-  useEffect(() => {
-    if (!api) {
+  const exitPresets = useCallback((e: MouseEvent | KeyboardEvent) => {
+    if (!presetDropdownActiveRef.current || !presetBox.current) {
       return;
     }
-    let cancelGroup: (() => void) | undefined;
-    if (!didMount.current) {
-      didMount.current = true;
-      window.addEventListener("click", exitPresets);
-      window.addEventListener("keypress", exitPresets);
-      dispatch(setJustLoggedIn(false));
-
-      cancelGroup = loadPresets();
+    // this somehow happens the same call cycle as the element being created so this is a workaround
+    if (ignoreClick.current) {
+      ignoreClick.current = false;
+      return;
     }
-    return () => {
-      didMount.current = false;
-      window.removeEventListener("click", exitPresets);
-      window.removeEventListener("keypress", exitPresets);
-      cancelGroup?.();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [api, dispatch]);
+    if (e instanceof KeyboardEvent && e.key !== "esc") {
+      return;
+    }
+    if (e instanceof MouseEvent) {
+      const rect = presetBox.current.getBoundingClientRect();
+      const clickInBox = rect.top <= e.clientY && rect.bottom >= e.clientY
+        && rect.left <= e.clientX && rect.right >= e.clientX;
+      if (clickInBox) {
+        return;
+      }
+    }
+    setPresetDropdownActive(false);
+  }, [presetDropdownActiveRef, setPresetDropdownActive, presetBox]);
+
+  const onPresetListClick = /*useCallback(*/(e: MouseEv<HTMLButtonElement>) => {
+    e.preventDefault();
+    setPresetDropdownActive((v) => !v);
+    ignoreClick.current = true;
+  }/*, [presetDropdownActive])*/;
 
   return (
     <>
@@ -179,8 +195,8 @@ export default function Authed() {
       >
         <EditPreset id={ presetId } onClose={() => onPresetModalClose() } />
       </Modal>
-      <nav className="fixed bottom-0 left-0 right-0 flex overflow-hidden" onTransitionEnd={ (ev) => ev.currentTarget.classList.remove("overflow-hidden") } aria-label="Logged in navigation">
-        <div className={ navbarClasses.join(" ") }>
+      <nav className={ navClasses.join(" ") } onTransitionEnd={ (ev) => setNavOverflow(false) } aria-label="Logged in navigation">
+        <div className={ menuClasses.join(" ") }>
           <Link to="/dashboard" className="p-2" aria-label="Dashboard">
             <Template classNameArr={["w-16", "h-16"]} />
           </Link>
@@ -189,19 +205,16 @@ export default function Authed() {
               type="button"
               className="p-2"
               aria-label="Presets"
-              onClick={ (_) => {
-                setPresetDropdownActive((v) => !v);
-                ignoreClick.current = true;
-              }}
+              onClick={ onPresetListClick }
               
             >
               <Presets classNameArr={["w-16", "h-16"]} />
             </button>
             { presetDropdownActive &&
-              <ul className="absolute bottom-[5.5rem] card" aria-label="Preset list">
+              <ul className="absolute bottom-[5.5rem] card" aria-label="Preset list" ref={ presetBox }>
                 { presets &&
                   presets.map((e) =>
-                    <li key={ e.id } className="flex gap-1 justify-between" ref={ presetBox }>
+                    <li key={ e.id } className="flex gap-1 justify-between">
                       { activePreset === e.id && 
                       <>&gt;</>
                       }
