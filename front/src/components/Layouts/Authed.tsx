@@ -178,11 +178,11 @@ export default function Authed() {
     setPresetDropdownActive(false);
   }, [presetDropdownActiveRef, setPresetDropdownActive, presetBox]);
 
-  const onPresetListClick = /*useCallback(*/(e: MouseEv<HTMLButtonElement>) => {
+  const onPresetListClick = (e: MouseEv<HTMLButtonElement>) => {
     e.preventDefault();
     setPresetDropdownActive((v) => !v);
     ignoreClick.current = true;
-  }/*, [presetDropdownActive])*/;
+  };
 
   return (
     <>
