@@ -160,6 +160,7 @@ export default function List() {
                   }}
                 />
               </th>
+              <th>Id</th>
               <th>Device</th>
               <th>Point id</th>
               <th>Tag</th>
@@ -205,6 +206,7 @@ export default function List() {
             disPoints.map(p =>
               <tr key={ p.id } aria-label={ `Device 0x${p.device_id}, endpoint ${p.device_position}` }>
                 <td aria-label="Select / deselect endpoint for editing"><input type="checkbox" checked={pointSelector[p.id] || false} onChange={(e) => updatePointSelector(e, p.id)}/></td>
+                <td aria-label="Id">{ p.id }</td>
                 <td aria-label="Device">0x{ p.device_id }</td>
                 <td aria-label="Endpoint">{ p.device_position }</td>
                 <td aria-label="tag">{ p.tag || "-" }</td>

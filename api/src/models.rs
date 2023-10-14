@@ -136,6 +136,11 @@ pub struct QueryById {
     pub id: i32,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SinglePoint {
+    pub value: i32,
+}
+
 #[derive(Queryable, Debug)]
 pub struct PresetItems {
     pub id: i32,

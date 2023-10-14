@@ -1,4 +1,5 @@
 pub mod identify;
+pub mod single;
 
 use crate::{
     api::ApiError,

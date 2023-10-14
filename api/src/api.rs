@@ -65,6 +65,11 @@ pub fn expose_api() -> Scope {
                 web::resource("/identify")
                 .route(web::post().to(self::points::identify::post))
             )
+            .service(
+                web::resource("/single/{point}")
+                .route(web::get().to(self::points::single::get))
+                .route(web::put().to(self::points::single::put))
+            )
         )
         .service(
             web::scope("/presets")
