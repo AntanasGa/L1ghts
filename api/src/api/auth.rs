@@ -93,8 +93,8 @@ pub async fn post(
     }
 
     let now = Utc::now();
-    let expires = now + Duration::seconds(15);
-    // let expires = now + Duration::minutes(15);
+    // let expires = now + Duration::seconds(15);
+    let expires = now + Duration::minutes(15);
 
     let uid = *&creds[0].id.clone();
     let auth_token = AuthToken {
@@ -219,8 +219,8 @@ pub async fn refresh_post(
     }
 
     let now = Utc::now();
-    // let expires = now + Duration::minutes(15);
-    let expires = now + Duration::seconds(15);
+    let expires = now + Duration::minutes(15);
+    // let expires = now + Duration::seconds(15);
 
     let auth_token = AuthToken {
         uid: matched.credential_id,
