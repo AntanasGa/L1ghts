@@ -1,8 +1,4 @@
-use std::sync::{
-    Arc,
-    RwLock
-};
-
+use std::sync::Arc;
 use crate::calls::AuthToken;
 use jsonwebtoken::TokenData;
 
@@ -23,7 +19,6 @@ pub struct Tokens {
 
 #[derive(Debug, Clone)]
 pub struct SharedStorage {
-    pub light_update_lock: Arc<RwLock<bool>>,
     pub i2c_device: Arc<u8>,
     pub setup_secret: Arc<String>,
 }
