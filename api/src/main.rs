@@ -6,10 +6,12 @@ pub mod api;
 pub mod middleware;
 pub mod types;
 pub mod dispatcher;
+pub mod connection_options;
 
 use api::expose_api;
 use api::helpers::batcher::Batcher;
 use api::helpers::i2c::LightDevices;
+use connection_options::ConnectionOptions;
 use dotenvy::dotenv;
 use types::{
     Tokens,
@@ -80,6 +82,11 @@ async fn main() -> std::io::Result<()> {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let db_pool = r2d2::Pool::builder()
+        .connection_customizer(Box::new(ConnectionOptions {
+            enable_wal: true,
+            enable_foreign_keys: true,
+            busy_timeout: Some(Duration::from_secs(10))
+        }))
         .build(manager)
         .expect("Could not initialized database pool");
 
