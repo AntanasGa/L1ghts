@@ -16,9 +16,7 @@ use crate::{
     },
     middleware::auth::TokenData,
 };
-use actix_web::{
-    web,
-};
+use actix_web::web;
 use diesel::{
     prelude::*,
     insert_into,

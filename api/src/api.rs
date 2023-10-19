@@ -5,9 +5,7 @@ mod points;
 mod presets;
 mod setup;
 
-use crate::{
-    middleware::auth::TokenFactory,
-};
+use crate::middleware::auth::TokenFactory;
 use actix_web::{
     web,
     Scope,
