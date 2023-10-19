@@ -5,7 +5,10 @@ pub mod calls;
 pub mod api;
 pub mod middleware;
 pub mod types;
+pub mod dispatcher;
+
 use api::expose_api;
+use api::helpers::batcher::Batcher;
 use api::helpers::i2c::LightDevices;
 use dotenvy::dotenv;
 use types::{
@@ -13,10 +16,8 @@ use types::{
     SharedStorage,
 };
 use std::env;
-use std::sync::{
-    Arc,
-    RwLock,
-};
+use std::sync::Arc;
+use std::time::Duration;
 use actix_web::{
     HttpServer,
     App,
@@ -66,6 +67,16 @@ async fn main() -> std::io::Result<()> {
         None => {}
     }
     
+    let default_rate_ms = 200;
+    let dispatcher_rate_ms = match env::var("DISPATCHER_RATE_MS") {
+        Ok(v) => match v.parse::<u64>() {
+            Ok(iv) => iv,
+            Err(_) => default_rate_ms.to_owned(),
+        },
+        Err(_) => default_rate_ms.to_owned(),
+    };
+    
+    // Duration::from_millis();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let db_pool = r2d2::Pool::builder()
@@ -73,10 +84,24 @@ async fn main() -> std::io::Result<()> {
         .expect("Could not initialized database pool");
 
     let cache_lock = SharedStorage {
-        light_update_lock: Arc::new(RwLock::new(false)),
         i2c_device: Arc::new(i2c_device),
         setup_secret: Arc::new(setup_secret),
     };
+
+    let batcher = Batcher::new();
+
+    let background_batcher = batcher.clone();
+    let db_pool_batcher = db_pool.clone();
+    let device_id_batcher = i2c_device.clone();
+    actix_web::rt::spawn(async move {
+        loop {
+            actix_web::rt::time::sleep(Duration::from_millis(dispatcher_rate_ms)).await;
+
+            if background_batcher.pull() {
+                dispatcher::dispatch(db_pool_batcher.clone(), device_id_batcher).await;
+            }
+        }
+    });
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));
     HttpServer::new(move || {
@@ -84,6 +109,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(tokens.clone()))
             .app_data(web::Data::new(cache_lock.clone()))
+            .app_data(web::Data::new(batcher.clone()))
             .wrap(
                 if env::var("ENV").expect("ENV must be set") == "dev" {
                     Cors::permissive()
